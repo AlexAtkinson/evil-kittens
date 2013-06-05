@@ -1,0 +1,117 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+# Test Service // Barebones Service Framework
+# /etc/init.d/<service> # EDIT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# chkconfig: 35 90 12
+# ----------------------------------------------------------------------
+# Required Files
+#       /etc/init.d/<service> # << This is this file
+#       /usr/sbin/<service>
+# Installation Part 1
+#   1.  Create this file in /etc/init.d/
+#       Note: The name of this file should match the service name
+#   2.  Create other files. See each file's comments for details
+#   3.  Edit this file accordingly. See comments flagged with chevrons
+# Installation Part 2 ( !!! Complete All File Creation First !!! )
+#   4.  Create the user this service will run as (If it doesn't exist)
+#   5.  Make files executable: chmod +x <filename>
+#   6.  Add to chkconfig: chkconig --add <service>
+#   7.  Set service to autostart: chkconfig <service> on
+# ----------------------------------------------------------------------
+# Author:               Alex Atkinson (www.alexatkinson.ca)
+# Author Date:          December 06, 2012
+# Last Modified:        Alex Atkinson
+# Modified By:          Alex Atkinson
+# Version:              1.1.a
+# ----------------------------------------------------------------------
+# Load Functions
+# ----------------------------------------------------------------------
+. /etc/init.d/functions # Init functions library
+. /etc/sysconfig/network # Networking library
+# ----------------------------------------------------------------------
+# Variables
+# ----------------------------------------------------------------------
+USER="<user>" # EDIT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+SVC_NAME="<service>" # EDIT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+SVC_CMD="/usr/sbin/$SVC_NAME &"
+LOG_DIR=/var/log/${SVC_NAME}
+LOG=${LOG_DIR}/${SVC_NAME}.log
+SVC_START=${SCRIPTS_DIR}/start_${SVC_NAME}.sh
+SVC_STOP=${SCRIPTS_DIR}/stop_${SVC_NAME}.sh
+SVC_LOCK=/var/lock/subsys/${SVC_NAME}
+NOW=[$(date +"%b %d %T")]
+LOG_START='sudo echo -e "$NOW\tNOTICE: $SVC_NAME has been STARTED." >> $LOG'
+LOG_STOP='sudo echo -e "$NOW\tNOTICE: $SVC_NAME has been STOPPED." >> $LOG'
+LOG_RESTART='sudo echo -e "$NOW\tNOTICE: $SVC_NAME has been RESTARTED." >> $LOG'
+RETVAL=0
+# ----------------------------------------------------------------------
+# SANITY
+# ----------------------------------------------------------------------
+# Script must be runs as specified user
+if [ "$(whoami)" != $USER ] ; then
+    echo -e "\nError: This script *must* be run as $USER!\n"
+    exit 1
+fi
+# $LOG_DIR & $LOG must exist and be writable
+if [ ! -d $LOG_DIR ] ; then
+    mkdir "$LOG_DIR"
+    if [ $? != 0 ] ; then
+        echo "$LOG_DIR does not exist & could not create."
+        exit 1
+    fi
+fi
+if [ ! -w $LOG_DIR ] ; then
+    chmod 660 "$LOG_DIR"
+    if [ $? != 0 ] ; then
+        echo "$LOG_DIR is not writable & could not be made writable."
+        exit 1
+    fi
+fi
+if [ ! -f $LOG ] ; then
+    touch "$LOG"
+    if [ $? != 0 ] ; then
+        echo "$LOG does not exist & could not create."
+        exit 1
+    fi
+fi
+if [ ! -w $LOG ] ; then
+    chmod 0640 "$LOG"
+    if [ $? != 0 ] ; then
+        echo "$LOG is not writable & could not be made writable."
+        exit 1
+    fi
+fi
+# ----------------------------------------------------------------------
+# Operations
+# ----------------------------------------------------------------------
+case "$1" in
+  start)
+        echo -n "Starting ${SVC_NAME}: "
+        daemon $SVC_CMD
+        RETVAL=$?
+        eval $LOG_START
+        echo
+        [ $RETVAL == 0 ] && touch $SVC_LOCK
+        ;;
+  stop)
+        echo -n "Stopping ${SVC_NAME}: "
+        killproc $SVC_NAME
+        eval $LOG_STOP
+        rm -f /var/lock/subsys/$SVC_NAME
+        echo
+        [ $RETVAL == 0 ] && rm -f $SVC_LOCK
+        ;;
+  restart|reload)
+        $0 stop
+        $0 start
+        eval $LOG_RESTART
+        ;;
+  status)
+        status $SVC_NAME
+        RETVAL=$?
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        RETVAL=2
+esac
+exit $RETVAL

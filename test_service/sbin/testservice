@@ -1,0 +1,53 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+# Test Service // Barebones Service Framework
+# /usr/sbin/<service> # EDIT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# ----------------------------------------------------------------------
+# Required Files
+#       /etc/init.d/<service>
+#       /usr/sbin/<service> # << This is this file
+# Installation Part 1
+#   1.  Create this file in /usr/sbin/
+#       Note: The name of this file defines the service name
+#   2.  Create other files. See each file's comments for details
+#   3.  Edit this file accordingly. See comments flagged with chevrons
+# Installation Part 2 ( !!! Complete All File Creation First !!! )
+#   4.  Create the user this service will run as (If it doesn't exist)
+#   5.  Make files executable: chmod +x <filename>
+#   6.  Add to chkconfig: chkconig --add <service>
+#   7.  Set service to autostart: chkconfig <service> on
+# ----------------------------------------------------------------------
+# Author:               Alex Atkinson (www.alexatkinson.ca)
+# Author Date:          December 06, 2012
+# Last Modified:        Alex Atkinson
+# Modified By:          Alex Atkinson
+# Version:              1.1.a
+# ----------------------------------------------------------------------
+# Variables
+# ----------------------------------------------------------------------
+SVC_NAME="<service>" # EDIT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/sbin:/home/chr1x2/bin
+GOOGLE="8.8.8.8"
+PAUSE=7200 # 2 Hours
+MISSED=0
+NOW=[$(date +"%b %d %T")]
+LOG_DIR=/var/log/${SVC_NAME}
+LOG=${LOG_DIR}/${SVC_NAME}.log
+PING_FAIL='sudo echo -e "$NOW\tWARNING: $SVC_NAME failed to succeed." >> $LOG'
+# ----------------------------------------------------------------------
+# Main Operations
+# ----------------------------------------------------------------------
+# Ping Googles public DNS server at interval defiend by $PAUSE
+while true; do
+    if ! ping -c 1 -w 1 $GOOGLE > /dev/null; then
+    ((MISSED++))
+elif [ $MISSED -gt 2 ]; then
+    "I can ping the interwebs."
+    eval $PING_FAIL
+fi
+    MISSED=0
+if [ $MISSED -eq 2 ]; then
+    "Unable to ping the interwebs. Please investigate."
+fi
+sleep $PAUSE;
+done
