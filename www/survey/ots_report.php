@@ -87,8 +87,8 @@ function toggle() {
      method=post onsubmit="return dropdown(this.gourl)">
 <select name="gourl">
 <option value="">-
-<option value="http://www3.toronto.bis.adp.com/offtech/ots_report_full.php/ots_report_full.xls">Full
-<option value="http://www3.toronto.bis.adp.com/offtech/ots_report_thismonth.php/ots_report_thismonth.xls">Current Month
+<option value="http://www.url.com/ots_report_full.php/ots_report_full.xls">Full
+<option value="http://www.url.com/ots_report_thismonth.php/ots_report_thismonth.xls">Current Month
 <!-- <option onclick=document.getElementById("ost_report_custom")>Custom-->
 <option id="displayText" value="javascript:toggle();"><a id="displayText" href="javascript:toggle();">Show Custom</a>
 </select>
